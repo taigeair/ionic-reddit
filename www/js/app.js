@@ -13,12 +13,21 @@ app.controller('TBACtrl', function($http, $scope){
 
 $scope.stories = [];
 
-$http.get('http://www.reddit.com/.json').success(function(response){
+$scope.loadOlderStories = function(){
+
+var params = {};
+if ($scope.stories.length > 0){
+  params['after'] = $scope.stories[$scope.stories.length-1].name;
+}
+$http.get('http://www.reddit.com/r/Funnypics.json', {params: params}).success(function(response){
   angular.forEach(response.data.children, function(child){
     $scope.stories.push(child.data);
     console.log(child.data);
         });
+    $scope.$broadcast('scroll.infiniteScrollComplete');
     });
+};
+
 });
 
 app.run(function($ionicPlatform) {
