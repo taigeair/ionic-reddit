@@ -9,24 +9,43 @@
 (function(){
 var app = angular.module('tba', ['ionic', 'angularMoment', 'starter.controllers', 'starter.services'])
 
+
 app.controller('TBACtrl', function($http, $scope){
 
 $scope.stories = [];
 
-$scope.loadOlderStories = function(){
+function loadStories(params,callback){
+      var stories = [];
 
+$http.get('https://www.reddit.com/r/funny/new/.json', {params: params}).success(function(response){
+  angular.forEach(response.data.children, function(child){
+    stories.push(child.data);
+    console.log(child.data);
+        });
+    callback(stories);
+    });
+}
+
+$scope.loadOlderStories = function(){
 var params = {};
 if ($scope.stories.length > 0){
   params['after'] = $scope.stories[$scope.stories.length-1].name;
-}
-$http.get('http://www.reddit.com/r/Funnypics.json', {params: params}).success(function(response){
-  angular.forEach(response.data.children, function(child){
-    $scope.stories.push(child.data);
-    console.log(child.data);
-        });
-    $scope.$broadcast('scroll.infiniteScrollComplete');
-    });
-};
+  }
+
+  loadStories(params, function(olderStories){
+  $scope.stories = $scope.stories.concat(olderStories/*param for this callback*/);
+  $scope.$broadcast('scroll.infiniteScrollComplete');
+  });
+ };
+
+$scope.getNewerStories = function(){ //why add to scope? add function to ctrl?
+   var params = {'before' : $scope.stories[0].name};
+
+   loadStories(params, function(newerStories/*name param for this callback*/){
+    $scope.stories = newerStories.concat($scope.stories);
+    $scope.$broadcast('scroll.refreshComplete');
+   });
+  };
 
 });
 
